@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>顧客管理システム</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0C0A;--surface:#151310;--card:#1C1A16;--card2:#231F1A;--gold:#C8A45A;--gold2:#E4C07A;--text:#F0EAE0;--muted:#8A7F6E;--border:#2E2A22;--border2:#3D3730;--new:#4A8C6A;--new-bg:#0E2018;--ret:#5A7AAC;--ret-bg:#0E1828;--danger:#C46A5A;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;}
+.header-inner{max-width:860px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),#8A6A2A);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);letter-spacing:1px;}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;}
+.header-tags{display:flex;gap:8px;}
+.tag{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;}
+.tag-new{background:var(--new-bg);color:var(--new);border:1px solid rgba(74,140,106,0.3);}
+.tag-ret{background:var(--ret-bg);color:var(--ret);border:1px solid rgba(90,122,172,0.3);}
+.prog-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:none;}
+.prog-wrap.show{display:block;}
+.prog-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:14px;}
+.prog-dots{display:flex;gap:4px;flex:1;}
+.dot{flex:1;height:3px;background:var(--border2);border-radius:2px;transition:background 0.4s;}
+.dot.done{background:var(--gold);}
+.dot.active{background:var(--gold2);}
+.prog-lbl{font-family:'Syne',sans-serif;font-size:11px;color:var(--muted);letter-spacing:2px;min-width:60px;text-align:right;}
+.main{max-width:860px;margin:0 auto;padding:36px 24px 80px;}
+.sec{display:none;animation:rise 0.4s cubic-bezier(0.22,1,0.36,1);}
+.sec.active{display:block;}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.step-eye{font-family:'Syne',sans-serif;font-size:10px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+.step-ttl{font-family:'Shippori Mincho B1',serif;font-size:clamp(20px,3vw,28px);font-weight:600;color:var(--text);margin-bottom:6px;}
+.step-hint{font-size:12px;color:var(--muted);margin-bottom:28px;}
+.classify-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px;}
+.cls-card{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.22s;position:relative;overflow:hidden;}
+.cls-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.22s;}
+.cls-card.new-c::before{background:radial-gradient(circle at 50% 0%,rgba(74,140,106,0.14) 0%,transparent 70%);}
+.cls-card.ret-c::before{background:radial-gradient(circle at 50% 0%,rgba(90,122,172,0.14) 0%,transparent 70%);}
+.cls-card:hover{transform:translateY(-3px);}
+.cls-card:hover::before{opacity:1;}
+.cls-card.new-c.selected,.cls-card.new-c:hover{border-color:var(--new);box-shadow:0 0 0 1px rgba(74,140,106,0.25),0 16px 48px rgba(74,140,106,0.12);}
+.cls-card.ret-c.selected,.cls-card.ret-c:hover{border-color:var(--ret);box-shadow:0 0 0 1px rgba(90,122,172,0.25),0 16px 48px rgba(90,122,172,0.12);}
+.cls-card.selected::before{opacity:1;}
+.cls-icon{font-size:36px;margin-bottom:14px;}
+.cls-lbl{font-family:'Shippori Mincho B1',serif;font-size:19px;font-weight:600;margin-bottom:6px;}
+.new-c .cls-lbl{color:var(--new);}
+.ret-c .cls-lbl{color:var(--ret);}
+.cls-desc{font-size:11px;color:var(--muted);line-height:1.6;}
+.search-wrap{position:relative;margin-bottom:16px;}
+.search-input{width:100%;background:var(--card);border:1.5px solid var(--border2);border-radius:12px;padding:14px 48px 14px 18px;font-family:'Noto Sans JP',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.search-input::placeholder{color:var(--muted);opacity:0.5;}
+.search-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,164,90,0.10);background:var(--card2);}
+.search-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px;pointer-events:none;}
+.search-results{background:var(--card2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;display:none;margin-top:4px;}
+.search-results.show{display:block;}
+.sri{padding:14px 18px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.sri:last-child{border-bottom:none;}
+.sri:hover{background:var(--card);}
+.sri-av{width:36px;height:36px;border-radius:50%;background:var(--ret-bg);border:1px solid rgba(90,122,172,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ret);font-weight:700;flex-shrink:0;}
+.sri-name{font-size:14px;color:var(--text);font-weight:500;}
+.sri-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.sri-days{margin-left:auto;text-align:right;}
+.sri-days-n{font-family:'Syne',sans-serif;font-size:20px;color:var(--gold);font-weight:700;line-height:1;}
+.sri-days-l{font-size:10px;color:var(--muted);letter-spacing:1px;}
+.sel-cust{background:var(--ret-bg);border:1.5px solid rgba(90,122,172,0.4);border-radius:12px;padding:16px 20px;display:none;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+.sel-cust.show{display:flex;}
+.sc-av{width:44px;height:44px;border-radius:50%;background:rgba(90,122,172,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ret);font-weight:700;flex-shrink:0;}
+.sc-info{flex:1;}
+.sc-name{font-size:16px;color:var(--text);font-weight:500;}
+.sc-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.sc-days{background:rgba(200,164,90,0.10);border:1px solid rgba(200,164,90,0.22);border-radius:10px;padding:8px 14px;text-align:center;flex-shrink:0;}
+.sc-days-n{font-family:'Syne',sans-serif;font-size:22px;color:var(--gold);font-weight:700;display:block;line-height:1;}
+.sc-days-l{font-size:10px;color:var(--muted);letter-spacing:1px;}
+.sc-clear{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;transition:color 0.15s;margin-left:auto;}
+.sc-clear:hover{color:var(--danger);}
+.no-res{padding:20px;text-align:center;color:var(--muted);font-size:13px;}
+.fg{margin-bottom:20px;}
+.fl{display:block;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.fl .req{color:var(--gold);}
+.ti{width:100%;background:var(--card);border:1.5px solid var(--border2);border-radius:12px;padding:14px 18px;font-family:'Noto Sans JP',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.ti::placeholder{color:var(--muted);opacity:0.45;}
+.ti:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,164,90,0.10);background:var(--card2);}
+input[type="date"].ti{color-scheme:dark;}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.pill{padding:9px 16px;background:var(--card);border:1.5px solid var(--border2);border-radius:50px;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap;user-select:none;}
+.pill:hover{color:var(--text);background:var(--card2);}
+.pill.on{background:rgba(200,164,90,0.10);border-color:var(--gold);color:var(--gold2);font-weight:500;}
+.voice-wrap{background:var(--card);border:1.5px solid var(--border2);border-radius:14px;overflow:hidden;transition:border-color 0.2s;}
+.voice-wrap:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,164,90,0.08);}
+.voice-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);}
+.mic-btn{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:50px;border:1.5px solid var(--border2);background:var(--card2);color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;}
+.mic-btn:hover{border-color:var(--gold);color:var(--gold);}
+.mic-btn.rec{background:rgba(196,106,90,0.12);border-color:var(--danger);color:var(--danger);animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(196,106,90,0.35)}50%{box-shadow:0 0 0 6px rgba(196,106,90,0)}}
+.mic-dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+.rec .mic-dot{animation:blink 0.8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.voice-ta{width:100%;min-height:100px;background:transparent;border:none;padding:14px 18px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--text);resize:vertical;outline:none;line-height:1.8;}
+.voice-ta::placeholder{color:var(--muted);opacity:0.4;}
+.voice-cc{padding:5px 14px;text-align:right;font-size:10px;color:var(--muted);border-top:1px solid var(--border);}
+.prev-box{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
+.prev-lbl{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.prev-txt{font-size:13px;color:var(--text);line-height:1.8;opacity:0.85;white-space:pre-wrap;}
+.prev-empty{font-size:12px;color:var(--muted);font-style:italic;}
+.btn-row{display:flex;gap:12px;justify-content:flex-end;margin-top:28px;padding-top:22px;border-top:1px solid var(--border);}
+.btn{padding:12px 26px;border-radius:50px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-ghost{background:transparent;border:1.5px solid var(--border2);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--text);color:var(--text);}
+.btn-primary{background:linear-gradient(135deg,var(--gold),#8A6A2A);color:#0D0C0A;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(200,164,90,0.30);}
+.err{font-size:11px;color:var(--danger);margin-top:6px;display:none;}
+.has-err .err{display:block;}
+.has-err .ti{border-color:var(--danger);}
+.ei{display:none;margin-top:8px;font-size:11px;color:var(--danger);}
+.ei.show{display:block;}
+.success-page{display:none;animation:rise 0.5s ease;}
+.success-page.active{display:block;}
+.success-hero{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:50px 36px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden;}
+.success-hero::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(200,164,90,0.10) 0%,transparent 70%);}
+.s-check{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#8A6A2A);display:flex;align-items:center;justify-content:center;margin:0 auto 22px;font-size:26px;position:relative;}
+.s-ttl{font-family:'Shippori Mincho B1',serif;font-size:26px;color:var(--text);margin-bottom:6px;}
+.s-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.type-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:50px;font-size:13px;font-weight:500;}
+.type-badge.new{background:var(--new-bg);color:var(--new);border:1px solid rgba(74,140,106,0.3);}
+.type-badge.ret{background:var(--ret-bg);color:var(--ret);border:1px solid rgba(90,122,172,0.3);}
+.toast{border-radius:12px;padding:13px 18px;font-size:13px;text-align:center;margin:14px 0;display:none;}
+.toast.show{display:block;animation:rise 0.3s ease;}
+.toast.sending{background:rgba(200,164,90,0.08);color:var(--gold);border:1px solid rgba(200,164,90,0.18);}
+.toast.ok{background:rgba(74,140,106,0.08);color:var(--new);border:1px solid rgba(74,140,106,0.2);}
+.toast.err-t{background:rgba(196,106,90,0.08);color:var(--danger);border:1px solid rgba(196,106,90,0.2);}
+.toast.warn{background:rgba(200,164,90,0.07);color:var(--gold);border:1px solid rgba(200,164,90,0.14);}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px 30px;margin-bottom:14px;}
+.sum-card h3{font-family:'Syne',sans-serif;font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.sum-row{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid rgba(46,42,34,0.5);align-items:flex-start;}
+.sum-row:last-child{border-bottom:none;}
+.sum-k{font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;min-width:110px;flex-shrink:0;padding-top:2px;}
+.sum-v{font-size:13px;color:var(--text);line-height:1.7;flex:1;white-space:pre-wrap;word-break:break-word;}
+.days-hl{display:inline-flex;align-items:center;gap:6px;background:rgba(200,164,90,0.10);border:1px solid rgba(200,164,90,0.22);border-radius:8px;padding:4px 12px;}
+.days-hl .num{font-family:'Syne',sans-serif;font-size:18px;color:var(--gold);font-weight:700;}
+.days-hl .lbl{font-size:11px;color:var(--muted);}
+.btn-reset{display:block;width:100%;padding:14px;background:transparent;border:1.5px solid var(--border2);border-radius:12px;color:var(--muted);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;cursor:pointer;text-align:center;transition:all 0.2s;margin-top:14px;}
+.btn-reset:hover{border-color:var(--gold);color:var(--gold);}
+@media(max-width:600px){.main{padding:24px 16px 60px;}.classify-grid{grid-template-columns:1fr;}.header-inner{padding:12px 16px;}.sum-row{flex-direction:column;gap:4px;}.sum-k{min-width:unset;}.success-hero{padding:36px 20px;}.sum-card{padding:20px 16px;}.sel-cust{flex-wrap:wrap;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">✂</div>
+      <div>
+        <div class="logo-text">Customer Manager</div>
+        <div class="logo-sub">Hair Salon</div>
+      </div>
+    </div>
+    <div class="header-tags">
+      <span class="tag tag-new">新規</span>
+      <span class="tag tag-ret">再来</span>
+    </div>
+  </div>
+</div>
+<div class="prog-wrap" id="prog-wrap">
+  <div class="prog-inner">
+    <div class="prog-dots" id="prog-dots"></div>
+    <div class="prog-lbl" id="prog-lbl">1 / 7</div>
+  </div>
+</div>
+<div class="main">
+
+  <!-- Q1: 顧客分類 -->
+  <div class="sec active" id="s1">
+    <div class="step-eye">Step 01</div>
+    <div class="step-ttl">顧客分類</div>
+    <div class="step-hint">今回の来店タイプを選択してください</div>
+    <div class="classify-grid">
+      <div class="cls-card new-c" onclick="selType('新規顧客',this)">
+        <div class="cls-icon">🌱</div>
+        <div class="cls-lbl">新規顧客</div>
+        <div class="cls-desc">初めてのお客様を<br>新規登録します</div>
+      </div>
+      <div class="cls-card ret-c" onclick="selType('再来客',this)">
+        <div class="cls-icon">🔁</div>
+        <div class="cls-lbl">再来客</div>
+        <div class="cls-desc">既存のお客様を<br>検索して記録します</div>
+      </div>
+    </div>
+    <div class="ei" id="e1">顧客分類を選択してください</div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="q1Next()">次へ →</button></div>
+  </div>
+
+  <!-- NEW S2: 顧客名 -->
+  <div class="sec" id="ns2">
+    <div class="step-eye">Step 02 / 新規登録</div>
+    <div class="step-ttl">顧客名</div>
+    <div class="step-hint">お客様の氏名を入力してください</div>
+    <div class="fg" id="fg-name"><label class="fl">氏名（漢字）<span class="req">*</span></label><input type="text" class="ti" id="f-name" placeholder="例：山田 花子"><div class="err">氏名を入力してください</div></div>
+    <div class="fg"><label class="fl">フリガナ</label><input type="text" class="ti" id="f-kana" placeholder="例：ヤマダ ハナコ"></div>
+    <div class="fg" id="fg-staff-new"><label class="fl">担当スタッフ名<span class="req">*</span></label><input type="text" class="ti" id="f-staff-new" placeholder="例：田中、スズキ など" list="staff-suggest-new"><datalist id="staff-suggest-new"></datalist><div class="err">担当スタッフ名を入力してください</div></div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="backQ1()">← 戻る</button><button class="btn btn-primary" onclick="nNext(2)">次へ →</button></div>
+  </div>
+
+  <!-- NEW S3: 来店経路 -->
+  <div class="sec" id="ns3">
+    <div class="step-eye">Step 03 / 新規登録</div>
+    <div class="step-ttl">来店経路</div>
+    <div class="step-hint">どこでサロンを知りましたか？（複数選択可）</div>
+    <div class="pills" id="ps-src">
+      <span class="pill" onclick="tog(this)">📱 Instagram</span>
+      <span class="pill" onclick="tog(this)">📱 TikTok</span>
+      <span class="pill" onclick="tog(this)">🔍 Google検索</span>
+      <span class="pill" onclick="tog(this)">🗺️ Googleマップ</span>
+      <span class="pill" onclick="tog(this)">💻 ホットペッパー</span>
+      <span class="pill" onclick="tog(this)">👨‍👩‍👧 家族の紹介</span>
+      <span class="pill" onclick="tog(this)">🤝 友人・知人</span>
+      <span class="pill" onclick="tog(this)">🚶 通りがかり</span>
+      <span class="pill" onclick="tog(this)">その他</span>
+    </div>
+    <div class="ei" id="e-src">来店経路を選択してください</div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="nBack(3)">← 戻る</button><button class="btn btn-primary" onclick="nNext(3)">次へ →</button></div>
+  </div>
+
+  <!-- NEW S4: 連絡手段 -->
+  <div class="sec" id="ns4">
+    <div class="step-eye">Step 04 / 新規登録</div>
+    <div class="step-ttl">連絡手段</div>
+    <div class="step-hint">主な連絡手段を選択してください（複数選択可）</div>
+    <div class="pills" id="ps-cnt">
+      <span class="pill" onclick="tog(this)">💚 個人LINE</span>
+      <span class="pill" onclick="tog(this)">📣 LINE公式</span>
+      <span class="pill" onclick="tog(this)">📷 Instagram DM</span>
+      <span class="pill" onclick="tog(this)">💻 ホットペッパー</span>
+      <span class="pill" onclick="tog(this)">📞 電話</span>
+      <span class="pill" onclick="tog(this)">📧 メール</span>
+      <span class="pill" onclick="tog(this)">連絡手段なし</span>
+    </div>
+    <div class="ei" id="e-cnt">連絡手段を選択してください</div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="nBack(4)">← 戻る</button><button class="btn btn-primary" onclick="nNext(4)">次へ →</button></div>
+  </div>
+
+  <!-- NEW S5: 来店動機 -->
+  <div class="sec" id="ns5">
+    <div class="step-eye">Step 05 / 新規登録</div>
+    <div class="step-ttl">来店動機</div>
+    <div class="step-hint">来店された主な動機を選択してください（複数選択可）</div>
+    <div class="pills" id="ps-mot">
+      <span class="pill" onclick="tog(this)">✂️ カットしたかった</span>
+      <span class="pill" onclick="tog(this)">🎨 カラーしたかった</span>
+      <span class="pill" onclick="tog(this)">💫 パーマ・縮毛矯正</span>
+      <span class="pill" onclick="tog(this)">✨ トリートメント</span>
+      <span class="pill" onclick="tog(this)">👤 スタッフ指名</span>
+      <span class="pill" onclick="tog(this)">🎉 イベント・特別な日</span>
+      <span class="pill" onclick="tog(this)">💰 キャンペーン・割引</span>
+      <span class="pill" onclick="tog(this)">🌟 雰囲気を変えたかった</span>
+    </div>
+    <div class="ei" id="e-mot">来店動機を選択してください</div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="nBack(5)">← 戻る</button><button class="btn btn-primary" onclick="nNext(5)">次へ →</button></div>
+  </div>
+
+  <!-- NEW S6: 来店日・次回提案 -->
+  <div class="sec" id="ns6">
+    <div class="step-eye">Step 06 / 新規登録</div>
+    <div class="step-ttl">来店日・次回提案</div>
+    <div class="step-hint">来店日と次回の提案を記録してください</div>
+    <div class="fg" id="fg-ndt"><label class="fl">来店日<span class="req">*</span></label><input type="date" class="ti" id="f-ndt"><div class="err">来店日を入力してください</div></div>
+    <div class="fg"><label class="fl">次回提案メニュー</label>
+      <div class="pills" id="ps-nm">
+        <span class="pill" onclick="tog(this)">✂️ カット</span><span class="pill" onclick="tog(this)">🎨 カラー</span><span class="pill" onclick="tog(this)">💫 パーマ</span><span class="pill" onclick="tog(this)">💆 縮毛矯正</span><span class="pill" onclick="tog(this)">✨ トリートメント</span><span class="pill" onclick="tog(this)">🛁 ヘッドスパ</span><span class="pill" onclick="tog(this)">未定</span>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">次回来店目安</label>
+      <div class="pills" id="ps-nv">
+        <span class="pill" onclick="togS(this,'ps-nv')">1ヶ月後</span><span class="pill" onclick="togS(this,'ps-nv')">1.5ヶ月後</span><span class="pill" onclick="togS(this,'ps-nv')">2ヶ月後</span><span class="pill" onclick="togS(this,'ps-nv')">3ヶ月後</span><span class="pill" onclick="togS(this,'ps-nv')">未定</span>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="nBack(6)">← 戻る</button><button class="btn btn-primary" onclick="nNext(6)">次へ →</button></div>
+  </div>
+
+  <!-- NEW S7: 特記事項・今回の会話 -->
+  <div class="sec" id="ns7">
+    <div class="step-eye">Step 07 / 新規登録</div>
+    <div class="step-ttl">特記事項・今回の会話</div>
+    <div class="step-hint">特記事項と今回施術中の会話内容を記録してください</div>
+    <div class="fg"><label class="fl">特記事項タグ</label>
+      <div class="pills" id="ps-tag">
+        <span class="pill" onclick="tog(this)">⚠️ カラーアレルギー</span><span class="pill" onclick="tog(this)">⚠️ 頭皮敏感</span><span class="pill" onclick="tog(this)">💆 首の痛み配慮</span><span class="pill" onclick="tog(this)">🌊 くせ毛強め</span><span class="pill" onclick="tog(this)">💧 超乾燥毛</span><span class="pill" onclick="tog(this)">🔥 ハイダメージ</span><span class="pill" onclick="tog(this)">⏱️ 時短希望</span><span class="pill" onclick="tog(this)">🤫 静かに過ごしたい</span>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">特記メモ</label><textarea class="ti" id="f-note" rows="3" placeholder="アレルギー、体調など..." style="resize:vertical;line-height:1.8;"></textarea></div>
+    <div class="fg"><label class="fl">今回の会話内容 <span style="color:var(--gold);font-size:10px;margin-left:6px;">🎤 音声入力対応</span></label>
+      <div class="voice-wrap">
+        <div class="voice-bar"><button class="mic-btn" id="mic1" onclick="toggleVoice('ta1','mic1','cc1')"><span class="mic-dot"></span><span>🎤 音声入力</span></button><span style="font-size:11px;color:var(--muted);">テキスト入力も可</span></div>
+        <textarea class="voice-ta" id="ta1" placeholder="今回施術中に話した内容、お客様の近況など…"></textarea>
+        <div class="voice-cc"><span id="cc1">0</span> 文字</div>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="nBack(7)">← 戻る</button><button class="btn btn-primary" onclick="submitNew()">登録する ✓</button></div>
+  </div>
+
+  <!-- RET S2: 顧客検索 -->
+  <div class="sec" id="rs2">
+    <div class="step-eye">Step 02 / 再来客</div>
+    <div class="step-ttl">顧客検索</div>
+    <div class="step-hint">お名前で既存のお客様を検索してください</div>
+    <div class="sel-cust" id="sel-cust">
+      <div class="sc-av" id="sc-av"></div>
+      <div class="sc-info"><div class="sc-name" id="sc-nm"></div><div class="sc-meta" id="sc-mt"></div></div>
+      <div class="sc-days" id="sc-days" style="display:none;"><span class="sc-days-n" id="sc-dn"></span><span class="sc-days-l">日ぶりの来店</span></div>
+      <button class="sc-clear" onclick="clearSel()">✕</button>
+    </div>
+    <div class="search-wrap" id="sw">
+      <input type="text" class="search-input" id="si" placeholder="お名前で検索..." oninput="searchCust(this.value)">
+      <span class="search-icon">🔍</span>
+      <div class="search-results" id="sr"></div>
+    </div>
+    <div class="ei" id="e-sr">お客様を選択してください</div>
+    <div class="fg" id="fg-staff-ret" style="margin-top:16px;"><label class="fl">担当スタッフ名<span class="req">*</span></label><input type="text" class="ti" id="f-staff-ret" placeholder="例：田中、スズキ など" list="staff-suggest-ret"><datalist id="staff-suggest-ret"></datalist><div class="err">担当スタッフ名を入力してください</div></div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="backQ1()">← 戻る</button><button class="btn btn-primary" onclick="rNext(2)">次へ →</button></div>
+  </div>
+
+  <!-- RET S3: 来店日・次回提案 -->
+  <div class="sec" id="rs3">
+    <div class="step-eye">Step 03 / 再来客</div>
+    <div class="step-ttl">来店日・次回提案</div>
+    <div class="step-hint">来店日と次回提案を記録してください</div>
+    <div class="fg" id="fg-rdt"><label class="fl">来店日<span class="req">*</span></label><input type="date" class="ti" id="f-rdt"><div class="err">来店日を入力してください</div></div>
+    <div class="fg"><label class="fl">次回提案メニュー</label>
+      <div class="pills" id="ps-rnm">
+        <span class="pill" onclick="tog(this)">✂️ カット</span><span class="pill" onclick="tog(this)">🎨 カラー</span><span class="pill" onclick="tog(this)">💫 パーマ</span><span class="pill" onclick="tog(this)">💆 縮毛矯正</span><span class="pill" onclick="tog(this)">✨ トリートメント</span><span class="pill" onclick="tog(this)">🛁 ヘッドスパ</span><span class="pill" onclick="tog(this)">未定</span>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">次回来店目安</label>
+      <div class="pills" id="ps-rnv">
+        <span class="pill" onclick="togS(this,'ps-rnv')">1ヶ月後</span><span class="pill" onclick="togS(this,'ps-rnv')">1.5ヶ月後</span><span class="pill" onclick="togS(this,'ps-rnv')">2ヶ月後</span><span class="pill" onclick="togS(this,'ps-rnv')">3ヶ月後</span><span class="pill" onclick="togS(this,'ps-rnv')">未定</span>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="rBack(3)">← 戻る</button><button class="btn btn-primary" onclick="rNext(3)">次へ →</button></div>
+  </div>
+
+  <!-- RET S4: 会話記録 -->
+  <div class="sec" id="rs4">
+    <div class="step-eye">Step 04 / 再来客</div>
+    <div class="step-ttl">会話内容の記録</div>
+    <div class="step-hint">過去の会話を確認しながら、今回の会話を記録してください</div>
+    <div class="fg"><label class="fl">前々回の会話内容（参照）</label><div class="prev-box" id="pb2"><div class="prev-empty">記録なし</div></div></div>
+    <div class="fg"><label class="fl">前回の会話内容（参照）</label><div class="prev-box" id="pb1"><div class="prev-empty">記録なし</div></div></div>
+    <div class="fg"><label class="fl">今回の会話内容 <span style="color:var(--gold);font-size:10px;margin-left:6px;">🎤 音声入力対応</span></label>
+      <div class="voice-wrap">
+        <div class="voice-bar"><button class="mic-btn" id="mic2" onclick="toggleVoice('ta2','mic2','cc2')"><span class="mic-dot"></span><span>🎤 音声入力</span></button><span style="font-size:11px;color:var(--muted);">テキスト入力も可</span></div>
+        <textarea class="voice-ta" id="ta2" placeholder="今回施術中に話した内容、お客様の近況など…"></textarea>
+        <div class="voice-cc"><span id="cc2">0</span> 文字</div>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="rBack(4)">← 戻る</button><button class="btn btn-primary" onclick="submitRet()">更新する ✓</button></div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-page" id="sp">
+    <div class="success-hero">
+      <div class="s-check">✓</div>
+      <div class="s-ttl" id="s-ttl"></div>
+      <div class="s-sub" id="s-sub"></div>
+      <div id="s-badge"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <div class="sum-card"><h3>登録内容</h3><div id="sum"></div></div>
+    <button class="btn-reset" onclick="resetAll()">＋ 次のお客様を登録する</button>
+  </div>
+
+</div>
+<script>
+// GAS URL - localStorageから読み込む（setup.htmlで設定）
+const GAS_URL = localStorage.getItem('dulce_gas_url') || '';
+const d={};
+let ctype='',selCust=null,vRecs={};
+const TN=7,TR=4;
+
+// ── LOCAL DB ──
+function getDB(){try{return JSON.parse(localStorage.getItem('hcs')||'[]');}catch{return[];}}
+function saveDB(l){try{localStorage.setItem('hcs',JSON.stringify(l));}catch{}}
+(function initSample(){
+  if(getDB().length===0)saveDB([
+    {id:1,name:'山田 花子',kana:'ヤマダ ハナコ',lastVisit:'2025-03-10',conv1:'旅行の話（沖縄が楽しかったと話していた）',conv2:'ダイエット始めたと話していた'},
+    {id:2,name:'鈴木 美咲',kana:'スズキ ミサキ',lastVisit:'2025-04-02',conv1:'ヨガを始めた、新しい職場に慣れてきたとのこと',conv2:'引越しの話、新しいカフェを見つけた'},
+    {id:3,name:'田中 さくら',kana:'タナカ サクラ',lastVisit:'2025-02-20',conv1:'来月結婚式があると話していた',conv2:'婚活を頑張っていると話していた'},
+  ]);
+})();
+
+// ── PROGRESS ──
+function initProg(n){
+  const w=document.getElementById('prog-wrap'),dots=document.getElementById('prog-dots');
+  w.classList.add('show');dots.innerHTML='';
+  for(let i=1;i<=n;i++){const el=document.createElement('div');el.className='dot';el.id='d'+i;dots.appendChild(el);}
+}
+function setProg(s,n){
+  for(let i=1;i<=n;i++){const el=document.getElementById('d'+i);if(!el)continue;el.classList.remove('done','active');if(i<s)el.classList.add('done');if(i===s)el.classList.add('active');}
+  document.getElementById('prog-lbl').textContent=s+' / '+n;
+}
+
+// ── Q1 ──
+function selType(v,el){document.querySelectorAll('.cls-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');ctype=v;document.getElementById('e1').classList.remove('show');}
+function q1Next(){
+  if(!ctype){document.getElementById('e1').classList.add('show');return;}
+  hide('s1');
+  if(ctype==='新規顧客'){initProg(TN);setProg(2,TN);show('ns2');}
+  else{initProg(TR);setProg(2,TR);show('rs2');document.getElementById('f-rdt').value=today();}
+  scr();
+}
+function backQ1(){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.getElementById('prog-wrap').classList.remove('show');show('s1');ctype='';document.querySelectorAll('.cls-card').forEach(c=>c.classList.remove('selected'));scr();}
+
+// ── NEW FLOW ──
+function nNext(s){
+  if(s===2){
+    const v=document.getElementById('f-name').value.trim();
+    if(!v){document.getElementById('fg-name').classList.add('has-err');return;}
+    document.getElementById('fg-name').classList.remove('has-err');
+    const st=document.getElementById('f-staff-new').value.trim();
+    if(!st){document.getElementById('fg-staff-new').classList.add('has-err');return;}
+    document.getElementById('fg-staff-new').classList.remove('has-err');
+    d.name=v;d.kana=document.getElementById('f-kana').value.trim();d.staff=st;
+    addStaffSuggest(st);sw('ns',2,3,TN);}
+  else if(s===3){const v=pills('ps-src');if(!v){document.getElementById('e-src').classList.add('show');return;}document.getElementById('e-src').classList.remove('show');d.source=v;sw('ns',3,4,TN);}
+  else if(s===4){const v=pills('ps-cnt');if(!v){document.getElementById('e-cnt').classList.add('show');return;}document.getElementById('e-cnt').classList.remove('show');d.contact=v;sw('ns',4,5,TN);}
+  else if(s===5){const v=pills('ps-mot');if(!v){document.getElementById('e-mot').classList.add('show');return;}document.getElementById('e-mot').classList.remove('show');d.motive=v;sw('ns',5,6,TN);document.getElementById('f-ndt').value=today();}
+  else if(s===6){const v=document.getElementById('f-ndt').value;if(!v){document.getElementById('fg-ndt').classList.add('has-err');return;}document.getElementById('fg-ndt').classList.remove('has-err');d.date=v;d.nextMenu=pills('ps-nm');d.nextVisit=pills('ps-nv');sw('ns',6,7,TN);}
+}
+function nBack(s){if(s===2){backQ1();return;}sw('ns',s,s-1,TN);}
+function submitNew(){
+  d.type='新規顧客';d.tags=pills('ps-tag');d.note=document.getElementById('f-note').value.trim();d.staff=d.staff||document.getElementById('f-staff-new').value.trim();
+  d.conv1=document.getElementById('ta1').value.trim();d.conv2='';d.daysSince='—';d.timestamp=new Date().toLocaleString('ja-JP');
+  const db=getDB();db.push({id:Date.now(),name:d.name,kana:d.kana,lastVisit:d.date,conv1:d.conv1,conv2:''});saveDB(db);
+  showSuccess();sendGAS({...d});
+}
+
+// ── RET FLOW ──
+function searchCust(q){
+  const res=document.getElementById('sr');
+  if(!q.trim()){res.classList.remove('show');return;}
+  const hits=getDB().filter(c=>c.name.includes(q)||(c.kana&&c.kana.includes(q)));
+  if(!hits.length){res.innerHTML='<div class="no-res">お客様が見つかりません</div>';res.classList.add('show');return;}
+  res.innerHTML=hits.map(c=>{
+    const ds=c.lastVisit?daysSince(c.lastVisit):null;
+    return`<div class="sri" onclick="selCustFn(${c.id})">
+      <div class="sri-av">${c.name.charAt(0)}</div>
+      <div><div class="sri-name">${c.name}</div><div class="sri-meta">${c.kana||''} ${c.lastVisit?'前回：'+c.lastVisit:''}</div></div>
+      ${ds!==null?`<div class="sri-days"><div class="sri-days-n">${ds}</div><div class="sri-days-l">日前</div></div>`:''}
+    </div>`;
+  }).join('');
+  res.classList.add('show');
+}
+function selCustFn(id){
+  const c=getDB().find(x=>x.id===id);if(!c)return;
+  selCust=c;
+  document.getElementById('sw').style.display='none';
+  document.getElementById('sr').classList.remove('show');
+  const sc=document.getElementById('sel-cust');sc.classList.add('show');
+  document.getElementById('sc-av').textContent=c.name.charAt(0);
+  document.getElementById('sc-nm').textContent=c.name+(c.kana?`（${c.kana}）`:'');
+  document.getElementById('sc-mt').textContent=c.lastVisit?`前回来店：${c.lastVisit}`:'初回登録済み';
+  const ds=c.lastVisit?daysSince(c.lastVisit):null;
+  const badge=document.getElementById('sc-days');
+  if(ds!==null){badge.style.display='block';document.getElementById('sc-dn').textContent=ds;}else{badge.style.display='none';}
+  document.getElementById('e-sr').classList.remove('show');
+}
+function clearSel(){selCust=null;document.getElementById('sel-cust').classList.remove('show');document.getElementById('sw').style.display='';document.getElementById('si').value='';document.getElementById('sr').classList.remove('show');}
+function rNext(s){
+  if(s===2){
+    if(!selCust){document.getElementById('e-sr').classList.add('show');return;}
+    const st=document.getElementById('f-staff-ret').value.trim();
+    if(!st){document.getElementById('fg-staff-ret').classList.add('has-err');return;}
+    document.getElementById('fg-staff-ret').classList.remove('has-err');
+    d.staff=st;addStaffSuggest(st);
+    hide('rs2');show('rs3');setProg(3,TR);document.getElementById('f-rdt').value=today();scr();}
+  else if(s===3){const v=document.getElementById('f-rdt').value;if(!v){document.getElementById('fg-rdt').classList.add('has-err');return;}document.getElementById('fg-rdt').classList.remove('has-err');d.date=v;d.nextMenu=pills('ps-rnm');d.nextVisit=pills('ps-rnv');
+    // show prev convs
+    const c=selCust;
+    const pb1=document.getElementById('pb1'),pb2=document.getElementById('pb2');
+    pb1.innerHTML=c.conv1&&c.conv1.trim()?`<div class="prev-txt">${c.conv1}</div>`:`<div class="prev-empty">記録なし</div>`;
+    pb2.innerHTML=c.conv2&&c.conv2.trim()?`<div class="prev-txt">${c.conv2}</div>`:`<div class="prev-empty">記録なし</div>`;
+    hide('rs3');show('rs4');setProg(4,TR);scr();
+  }
+}
+function rBack(s){if(s===3){hide('rs3');show('rs2');setProg(2,TR);}else if(s===4){hide('rs4');show('rs3');setProg(3,TR);}scr();}
+function submitRet(){
+  const c=selCust;
+  d.type='再来客';d.name=c.name;d.kana=c.kana||'';
+  d.daysSince=c.lastVisit?String(daysSince(c.lastVisit)):'—';
+  d.prevConv1=c.conv1||'';d.prevConv2=c.conv2||'';
+  d.conv1=document.getElementById('ta2').value.trim();
+  d.timestamp=new Date().toLocaleString('ja-JP');
+  // shift conv history
+  const db=getDB(),idx=db.findIndex(x=>x.id===c.id);
+  if(idx!==-1){db[idx].conv2=db[idx].conv1||'';db[idx].conv1=d.conv1;db[idx].lastVisit=d.date;}
+  saveDB(db);
+  showSuccess();sendGAS({...d});
+}
+
+// ── SUCCESS ──
+function showSuccess(){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.getElementById('prog-wrap').classList.remove('show');
+  document.getElementById('sp').classList.add('active');scr();
+  const isNew=d.type==='新規顧客';
+  document.getElementById('s-ttl').textContent=`${d.name} 様を${isNew?'登録':'更新'}しました`;
+  document.getElementById('s-sub').textContent=`来店日：${d.date}`;
+  document.getElementById('s-badge').innerHTML=`<span class="type-badge ${isNew?'new':'ret'}">${isNew?'🌱 新規顧客':'🔁 再来客'}</span>`;
+  const rows=isNew?[
+    ['顧客分類',d.type],['氏名',d.name+(d.kana?`（${d.kana}）`:'')],
+    ['担当スタッフ',d.staff||'—'],['来店経路',d.source],['連絡手段',d.contact],['来店動機',d.motive],
+    ['来店日',d.date],['次回提案',[d.nextMenu,d.nextVisit].filter(Boolean).join(' / ')||'—'],
+    ['特記事項',[d.tags,d.note].filter(Boolean).join(' / ')||'—'],
+    ['今回の会話',d.conv1||'—'],
+  ]:[
+    ['顧客分類',d.type],['担当スタッフ',d.staff||'—'],['氏名',d.name+(d.kana?`（${d.kana}）`:'')],
+    ['来店日',d.date],
+    ['来店間隔',d.daysSince!=='—'?`<span class="days-hl"><span class="num">${d.daysSince}</span><span class="lbl">日ぶり</span></span>`:'—'],
+    ['次回提案',[d.nextMenu,d.nextVisit].filter(Boolean).join(' / ')||'—'],
+    ['今回の会話',d.conv1||'—'],
+  ];
+  document.getElementById('sum').innerHTML=rows.map(([k,v])=>`<div class="sum-row"><div class="sum-k">${k}</div><div class="sum-v">${v}</div></div>`).join('');
+}
+
+// ── RESET ──
+function resetAll(){
+  Object.keys(d).forEach(k=>delete d[k]);ctype='';selCust=null;
+  document.getElementById('sp').classList.remove('active');
+  document.getElementById('prog-wrap').classList.remove('show');
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  show('s1');
+  document.querySelectorAll('.cls-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ti,.voice-ta').forEach(el=>el.value='');addStaffSuggest('');
+  document.querySelectorAll('.has-err').forEach(el=>el.classList.remove('has-err'));
+  document.querySelectorAll('.ei.show').forEach(el=>el.classList.remove('show'));
+  clearSel();
+  ['cc1','cc2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='0';});
+  Object.values(vRecs).forEach(r=>{try{r.stop();}catch{}});vRecs={};
+  document.getElementById('f-ndt').value=today();document.getElementById('f-rdt').value=today();
+  scr();
+}
+
+// ── VOICE ──
+function toggleVoice(taId,btnId,ccId){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('音声入力はChrome（PC・Android）またはSafari（iOS）をご利用ください。');return;}
+  const btn=document.getElementById(btnId),lbl=btn.querySelector('span:last-child');
+  if(vRecs[taId]){vRecs[taId].stop();return;}
+  const rec=new SR();rec.lang='ja-JP';rec.continuous=true;rec.interimResults=true;
+  const ta=document.getElementById(taId),base=ta.value;
+  rec.onstart=()=>{btn.classList.add('rec');lbl.textContent='■ 停止';vRecs[taId]=rec;};
+  rec.onresult=(e)=>{let fin='',itm='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript;else itm+=e.results[i][0].transcript;}ta.value=base+fin+itm;const cc=document.getElementById(ccId);if(cc)cc.textContent=ta.value.length;};
+  rec.onend=()=>{btn.classList.remove('rec');lbl.textContent='🎤 音声入力';delete vRecs[taId];};
+  rec.onerror=(e)=>{btn.classList.remove('rec');lbl.textContent='🎤 音声入力';delete vRecs[taId];if(e.error!=='no-speech')alert('音声エラー: '+e.error);};
+  rec.start();
+}
+
+// ── PILLS ──
+function tog(el){el.classList.toggle('on');}
+function togS(el,pid){document.getElementById(pid).querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));el.classList.add('on');}
+function pills(id){return[...document.getElementById(id).querySelectorAll('.pill.on')].map(p=>p.textContent.trim()).join('、');}
+
+// ── GAS ──
+async function sendGAS(entry){
+  const t=document.getElementById('toast'),sh=(type,msg)=>{t.className='toast show '+type;t.textContent=msg;};
+  if(!GAS_URL||GAS_URL.trim()===''){sh('warn','⚠️ GAS URLが未設定です。HTMLの GAS_URL を書き換えてください。');return;}
+  sh('sending','📤 スプレッドシートに送信中...');
+  try{await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});sh('ok','✅ スプレッドシートへの転記が完了しました');}
+  catch(e){sh('err-t','❌ 送信エラー。GAS URLを確認してください。');}
+}
+
+// ── UTILS ──
+function today(){return new Date().toISOString().split('T')[0];}
+function scr(){window.scrollTo({top:0,behavior:'smooth'});}
+function daysSince(ds){return Math.floor((new Date()-new Date(ds))/86400000);}
+function show(id){document.getElementById(id).classList.add('active');}
+function hide(id){document.getElementById(id).classList.remove('active');}
+function sw(pre,from,to,total){hide(pre+from);show(pre+to);setProg(to,total);scr();}
+
+// ── CHAR COUNT ──
+['ta1','ta2'].forEach((id,i)=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',()=>{const cc=document.getElementById('cc'+(i+1));if(cc)cc.textContent=el.value.length;});});
+document.getElementById('f-ndt').value=today();
+document.getElementById('f-rdt').value=today();
+
+// ── STAFF SUGGEST ──
+function getStaffList(){try{return JSON.parse(localStorage.getItem('hcs_staff')||'[]');}catch{return[];}}
+function addStaffSuggest(name){
+  if(!name)return;
+  const list=getStaffList();
+  if(!list.includes(name)){list.push(name);localStorage.setItem('hcs_staff',JSON.stringify(list));}
+  ['staff-suggest-new','staff-suggest-ret'].forEach(id=>{
+    const dl=document.getElementById(id);if(!dl)return;
+    dl.innerHTML=getStaffList().map(n=>`<option value="${n}">`).join('');
+  });
+}
+// init suggestions on load
+addStaffSuggest('');
+</script>
+</body>
+</html>
